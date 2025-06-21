@@ -2,14 +2,14 @@ from typing import Optional, Generator, NamedTuple
 from threading import Thread
 from dataclasses import dataclass, field
 from abc import ABCMeta, abstractmethod
-from Constants import COUNTER_TYPES
+from Constants import CONTROLLER_TYPES
 from queue import PriorityQueue
-import uuid
+from uuid import UUID, uuid4
 
 
-class Counter(metaclass=ABCMeta):
+class Controller(metaclass=ABCMeta):
     """_summary_
-    Counter class is an ABSTRACT BASE CLASS
+    Controller class is an ABSTRACT BASE CLASS
 
     _description_
     Uses to ABCMeta as the metaclass for Counter types. Subclassing different counter objects from this class as a convenience.
@@ -26,18 +26,18 @@ class Counter(metaclass=ABCMeta):
 
     min: int
 
-    threader_parent: Optional[Thread]
+    threader: Optional[str]
 
     _name: str
 
-    _COUNT_TYPE: COUNTER_TYPES
+    _COUNT_TYPE: CONTROLLER_TYPES
 
-    _IDENTITY: uuid.UUID
+    _IDENTITY: UUID
 
     @abstractmethod
     def __post_init__(self) -> None:
         """_summary_
-        These counters need to be able to send information back to the threader. Here is where final set up is done where we can link the
+        These controllers need to be able to send information back to the threader. Here is where final set up is done where we can link the
         """
         pass
 
@@ -63,7 +63,7 @@ class Counter(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def loadCounterInfo(self) -> None:
+    def load_controller(self) -> None:
         """_summary_
         The formal interface requires a function that loads relevant threader information - triggers, errors, callbacks, etc. - into a Priority Queque for the threader to process.
         """
@@ -72,9 +72,9 @@ class Counter(metaclass=ABCMeta):
     @classmethod
     def __subclasscheck__(cls, subclass: type) -> bool:
         """_summary_
-        Checks the subclass to identify that they are of the same type. If multiple counters are used, checks can be done to discriminate between the counters.
+        Checks the subclass to identify that they are of the same type. If multiple controller are used, checks can be done to discriminate between the controller.
 
-        NOTE: Other Counters could be Retry Counters for controlling reattempt behavior, Session Counters to track on going user sessions, and Error Counters for capturing information on errors happening in individual threads.
+        NOTE: Other Controller could be Retry Controller for controlling reattempt behavior, Session Controller to track on going user sessions, and Error Controller for capturing information on errors happening in individual threads.
 
         Args:
             subclass -> type:
@@ -102,21 +102,25 @@ class Counter(metaclass=ABCMeta):
 
 # Thread Counter Implementation
 @dataclass(slots=True, order=True)
-class ThreadCounter(Counter):
-    """ThreadCounter is an implementation of the Counter class"""
+class ThreadController(Controller):
+    """ThreadController is an implementation of the Counter class"""
 
     # Additional Identification Variables
-    _IDENTITY: uuid.UUID = field(init=True, default_factory=uuid.uuid4)
+    _IDENTITY: UUID = field(init=True, default_factory=uuid4)
 
-    _COUNT_TYPE: COUNTER_TYPES = COUNTER_TYPES.THREADER
+    _CONTROLLER_TYPE: CONTROLLER_TYPES = CONTROLLER_TYPES.THREAD
 
     # Threader Components
-    threader_parent: Optional[Thread] = None
+    threader: Optional[str] = None
 
-    thread_counter_PQ: Optional[PriorityQueue] = None
+    thread_PQ: Optional[PriorityQueue] = None
 
     # Basic Defaults for the Thread Counter
-    _name: str = field(init=True, default=f"{_COUNT_TYPE}:\t{_IDENTITY}")
+    name: str = (
+        field(init=True, default=f"{_CONTROLLER_TYPE}:\t{_IDENTITY}")
+        if threader is None
+        else field(init=True, default=f"Thread Controller {_IDENTITY} of {threader}")
+    )
 
     val: int = 1
 
@@ -160,7 +164,7 @@ class ThreadCounter(Counter):
         adjust = adjustment if adjustment is not None else self.step
         self.val = next(self.__increment__(adjust))
 
-    def loadCounterInfo(self) -> None:
+    def load_controller(self) -> None:
         """Load data to Threader"""
         # TODO: Implement load_counter_info to
         pass
