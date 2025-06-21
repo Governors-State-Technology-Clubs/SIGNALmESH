@@ -25,34 +25,37 @@ class THREADER_CODES(Enum):
     _NONE = "NONE"
 
 
-class COUNTER_TYPES(Enum):
-    """List of Counter types"""
+class CONTROLLER_TYPES(Enum):
+    """List of Controller types"""
 
-    THREADER = "Threader Counter"
-    WORKER = "Worker Counter"
-    TASK = "Task Counter"
-    ERROR = "Error Counter"
-    SESSION = "Session Counter"
-    JOB = "Job Counter"
+    THREAD = "Thread Controller"
+    WORK = "Work Controller"
+    TASK = "Task Controller"
+    ERROR = "Error Controller"
+    SESSION = "Session Controller"
+    JOB = "Job Controller"
 
 
 class THREADER_TYPES(Enum):
     """List of Threader types"""
 
     MASTER_THREADER = auto()
-    CO_MASTER = auto()
-    WORKER_THREADER = auto()
+    SUBTHREADER = auto()
 
     # Thread group for testing, wasn't sure if needed
     TEST_THREAD = auto()
 
 
-class PROCESS_TYPE(Enum):
+class THREAD_TYPES(Enum):
+    WORKER_THREAD = auto()
+    SETUP_THREAD = auto()
+
+
+class PROCESSOR_TYPE(Enum):
     """List of process types"""
 
-    MASTER_PROCESS = auto()
-    CO_PROCESS = auto()
-    CHILD_PROCESS = auto()
+    MASTER_PROCESSOR = auto()
+    SUBPROCESSOR = auto()
 
     # Process group for testing, wasn't sure if needed
     TEST_PROCESS = auto()
