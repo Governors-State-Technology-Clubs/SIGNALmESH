@@ -4,96 +4,131 @@ from dataclasses import dataclass, field
 from abc import ABCMeta, abstractmethod
 from Constants import THREADER_TYPES
 from queue import PriorityQueue
-from Counters import ThreadCounter
-import uuid
+from Controllers import ThreadController
+from uuid import UUID, uuid4
 
 
 class Threader(Thread, metaclass=ABCMeta):
     """Formal Threader interface class. Inherits from threading.Thread class and uses ABCMeta as the metaclass"""
 
+    _IDENTITY: UUID
+
     _THREADER_TYPE: THREADER_TYPES
 
-    _THREADER_ERROR: ThreadError
+    name: str
 
-    _IDENTITY: uuid.UUID
+    thread_val: int
 
-    _thread_counter: Optional[ThreadCounter]
+    thread_step: int
 
-    _threader_PQ: PriorityQueue
+    thread_max: int
+
+    thread_min: int
+
+    queue_size: Optional[int]
+
+    work_thread: Optional[function]
+
+    threader_PQ: Optional[PriorityQueue]
 
     _thread_list: List[NamedTuple]
 
-    _name: str
+    _THREAD_CONTROLLER: Optional[ThreadController]
 
-    _thread_val: int
+    @abstractmethod
+    def __post_init__(self) -> None:
+        """Implement any additional setup or actions that class should handle after the instance has been created"""
+        pass
 
-    _thread_step: int
+    @abstractmethod
+    def worker(self, func: function, threader_queue: PriorityQueue) -> None:
+        """Implement a wrapper or decorator for injected functions"""
+        pass
 
-    _thread_max: int
+    @abstractmethod
+    def generate_worker(self) -> None:
+        """Implement a function that generates the worker thread"""
+        pass
 
-    _thread_min: int
+    @abstractmethod
+    def add_worker(self) -> None:
+        """Implement a function that takes the generated worker and adds it to a List of NamedTuples"""
+        pass
 
-    _thread_lock: Lock
 
-
-# Threader Implementation
+#  Master Threader Implementation
 @dataclass(slots=True, order=True)
 class MasterThreader(Threader):
     "MasterThreader class inherits from the Threader Abstract Base Class"
 
-    # default behaivor when instance is called like a function
-    def __call__(self):
-        # TODO: Make default behaivor
+    # Whether or not this function is needed is TBD
+    def __post_init__(self) -> None:
         pass
 
-    def threadGenerate(self, _thread_list: List[NamedTuple]) -> List[NamedTuple]:
-        """Generate a list of tuples"""
-        # TODO:Implement thread_generate function
-        # Create thread and generate
+    def getThread(self, id: UUID, name: str) -> Optional[NamedTuple]:
+        # TODO: Make method to search for threads by _IDENTITY. NOTE: Intention naive implementation of for loops
+        pass
 
-        return []
+    def worker(self, func: function, threader_queue: PriorityQueue) -> None:
+        # TODO: Make an internal Thread decorator for thread functions
+        pass
+
+    def generate_worker(self) -> None:
+        """Create and start work thread"""
+        thread: Thread = Thread(
+            target=self.worker, name=self.name, args=(self.threader_PQ,)
+        )
+
+    def add_worker(self) -> None:
+        pass
+
+    def getPQ(self) -> Optional[PriorityQueue]:
+        return self.threader_PQ
+
+    def generate_PQ(self) -> None:
+        self.threader_PQ = PriorityQueue(maxsize=15)
 
     # Additional Identification
-    _IDENTITY: uuid.UUID = field(init=True, default_factory=uuid.uuid4)
+    _IDENTITY: UUID = field(init=False, default_factory=uuid4)
 
-    _THREADER_TYPE: THREADER_TYPES = THREADER_TYPES.MASTER_THREADER
+    _THREADER_TYPE: THREADER_TYPES = field(
+        init=True, default=THREADER_TYPES.MASTER_THREADER
+    )
 
     # Basic Default Variables for Master Threaders
-    _name: str = field(init=True, default=f"{_THREADER_TYPE}:\t{_IDENTITY}")
+    name: str = field(init=True, default=f"{__name__} {_THREADER_TYPE}:\t{_IDENTITY}")
 
-    _threader_PQ: PriorityQueue = PriorityQueue(maxsize=15)
+    thread_val: int = field(init=False, default=1)
 
+    thread_step: int = field(init=True, default=1)
+
+    thread_max: int = field(init=True, default=10)
+
+    thread_min: int = field(init=True, default=0)
+
+    queue_size: Optional[int] = None
+
+    work_thread: Optional[function] = None
+
+    threader_PQ: Optional[PriorityQueue] = None
+
+    _thread_list: List[NamedTuple] = field(init=False, default=[])
+
+    # Threader Constants
     _THREAD_LOCK: Lock = Lock()
 
-    _THREADER_ERROR: ThreadError = ThreadError()
+    _THREAD_ERROR: ThreadError = ThreadError()
 
-    _thread_obj: Thread = Thread(
-        target=threadGenerate, name=f"Child Thread of :{_name}", args=(_threader_PQ,)
+    _THREAD_CONTROLLER: Optional[ThreadController] = ThreadController(
+        threader=name, val=thread_val, step=thread_step, max=thread_max, min=thread_min
     )
-
-    _thread_counter: Optional[ThreadCounter] = ThreadCounter(
-        threader_parent=_thread_obj,
-        thread_counter_PQ=_threader_PQ,
-    )
-
-    _thread_list: List[NamedTuple] = []
-
     # TODO: Test and debug MasterThreader implementation
     # Handle emitted errors from ThreadCounter
-    # Implement WorkerThreader
+    # Implement SubThreader
     # Implement thread_generate function
-    # Attach Priority Queue to subordinate threads
-
-    @classmethod
-    def getThreader(cls, id: uuid.UUID) -> Optional[NamedTuple]:
-        # TODO: Make class method to search for threads by _IDENTITY
-        pass
-
-    def getPQ(self) -> PriorityQueue:
-        return self._threader_PQ
 
 
-# Threader implementation
-class WorkerThreader(Threader):
-    # TODO:
+# SubThreader implementation
+class SubThreader(Threader):
+    # TODO: Create Implementation of a subThreader
     pass
